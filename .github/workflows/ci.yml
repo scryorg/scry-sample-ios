@@ -1,0 +1,29 @@
+# Build and unit-test Kettle. Runs on pull requests and pushes, on a GitHub-hosted runner, with no secrets.
+name: ci
+on:
+  pull_request:
+  push:
+permissions:
+  contents: read
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - name: Build and test
+        run: |
+          xcodebuild test -project Kettle.xcodeproj -scheme Kettle -sdk iphonesimulator \
+            -destination "platform=iOS Simulator,name=iPhone 16" -derivedDataPath .build
+      - name: Release build has no capture code
+        run: |
+          xcodebuild build -project Kettle.xcodeproj -scheme Kettle -configuration Release -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" -derivedDataPath .build-release
+          if strings .build-release/Build/Products/Release-iphonesimulator/Kettle.app/Kettle | grep -E 'scry:ready|ScryScreen|ScryList'; then
+            echo "capture code found in the Release binary"; exit 1
+          fi
+      - name: Workflow rules
+        run: bash scripts/check-workflows.sh

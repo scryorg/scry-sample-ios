@@ -1,0 +1,13 @@
+# Xcode
+.build/
+build/
+.build-release/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.DS_Store
+
+# Scry capture output and secrets
+.scry/
+.env
+.env.*
